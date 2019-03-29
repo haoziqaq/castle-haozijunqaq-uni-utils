@@ -29,6 +29,8 @@ var deleteObjectFirstProperty = function deleteObjectFirstProperty() {
 
 var headerExceptRequestURLs = [];
 var headerOptions = [];
+var handleGlobalServerException = function handleGlobalServerException(response) {};
+var handleGlobalServerCode = function handleGlobalServerCode(error) {};
 
 var service = _axios2.default.create();
 service.withCredentials = true;
@@ -67,6 +69,15 @@ service.interceptors.request.use(function (config) {
     return config;
 }, function (error) {
     Promise.reject(error);
+});
+
+service.interceptors.response.use(function (response) {
+    handleGlobalServerCode(response);
+    return response;
+}, function (error) {
+    //响应错误处理
+    handleGlobalServerException(error);
+    return Promise.reject(error);
 });
 
 service.getData = function (url, par) {
@@ -145,16 +156,8 @@ service.setBaseUrl = function (baseURL) {
     service.defaults.baseURL = baseURL;
 };
 
-service.getBaseUrl = function (baseURL) {
-    return service.defaults.baseURL;
-};
-
 service.setTimeout = function (time) {
     service.defaults.timeout = time;
-};
-
-service.getTimeout = function (time) {
-    return service.defaults.timeout;
 };
 
 service.addHeader = function () {
@@ -162,10 +165,6 @@ service.addHeader = function () {
     var value = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
 
     headerOptions.push([key, value]);
-};
-
-service.resetHeaders = function () {
-    headerOptions = [];
 };
 
 service.setHeadersExcept = function () {
@@ -176,6 +175,14 @@ service.setHeadersExcept = function () {
 
 service.changeIsWithCredentials = function (isWithCredentials) {
     service.withCredentials = isWithCredentials;
+};
+
+service.setHandleGlobalServerException = function (fn) {
+    handleGlobalServerException = fn;
+};
+
+service.setHandleGlobalServerCode = function (fn) {
+    handleGlobalServerCode = fn;
 };
 
 exports.default = service;
