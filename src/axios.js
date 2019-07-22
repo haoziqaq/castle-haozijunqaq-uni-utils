@@ -15,7 +15,6 @@ const deleteObjectFirstProperty = (object = {}) => {
 
 let headerExceptRequestURLs = [];
 let headerOptions = [];
-let handleGlobalServerException = (response) => {};
 let handleGlobalServerCode = (error) => {};
 
 const service = axios.create();
@@ -57,7 +56,6 @@ service.interceptors.response.use(
         return response;
     },
     error => {  //响应错误处理
-        handleGlobalServerException(error);
         return Promise.reject(error)
     }
 );
@@ -134,6 +132,69 @@ service.postJSON = (url, par, options = {headers: {'Content-Type': 'application/
     });
 };
 
+service.getBlob = (url, par = {}, options = {}, taskCallback) => {
+    const reqURL = (url.indexOf('http') !== -1 || url.indexOf('https') !== -1) ? url : `${service.defaults.baseURL}${url}`
+    const hasUrl = headerExceptRequestURLs.some(exceptURL => exceptURL === reqURL);
+    let queryString = reqURL.indexOf('?') !== -1 ? '' : '?';
+    Object.keys(par).forEach(key => {
+        queryString += `${key}=${par[key]}&`
+    });
+    queryString = queryString.substring(0, queryString.length - 1);
+    let header = {};
+    if (!hasUrl) {
+        headerOptions.forEach((headers) => {
+            header[headers[0]] = headers[1];
+        });
+    }
+    options = options || {};
+    header = Object.assign(header, options.headers || {})
+    return new Promise((resolve, reject) => {
+        const task = uni.downloadFile({
+            url: `${reqURL}${queryString}`,
+            header,
+            success(res) {
+                resolve(res);
+            },
+            fail(res) {
+                reject(res);
+            }
+        });
+        if (taskCallback) taskCallback(task);
+    })
+};
+
+service.postMultipart = (url, par = {}, options = {}, taskCallback) => {
+    const reqURL = (url.indexOf('http') !== -1 || url.indexOf('https') !== -1) ? url : `${service.defaults.baseURL}${url}`
+    const hasUrl = headerExceptRequestURLs.some(exceptURL => exceptURL === reqURL);
+    const [name = '', filePath = ''] = getObjectFirstProperty(par);
+    deleteObjectFirstProperty(par);
+    let header = {};
+    if (!hasUrl) {
+        headerOptions.forEach((headers) => {
+            header[headers[0]] = headers[1];
+        });
+    }
+    options = options || {};
+    header = Object.assign(header, options.headers || {})
+    return new Promise((resolve, reject) => {
+        const task = uni.uploadFile({
+            url: reqURL,
+            filePath,
+            name,
+            header,
+            formData: par,
+            success(res) {
+                res.data = JSON.parse(res.data);
+                resolve(res);
+            },
+            fail(res) {
+                reject(res);
+            }
+        });
+        if (taskCallback) taskCallback(task);
+    })
+};
+
 service.setBaseUrl = (baseURL) => {
     service.defaults.baseURL = baseURL;
 };
@@ -154,11 +215,7 @@ service.changeIsWithCredentials = (isWithCredentials) => {
     service.withCredentials = isWithCredentials;
 };
 
-service.setHandleGlobalServerException = (fn) => {
-    handleGlobalServerException = fn;
-};
-
-service.setHandleGlobalServerCode = (fn) => {
+service.setResultCodeHandler = (fn) => {
     handleGlobalServerCode = fn;
 };
 

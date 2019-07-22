@@ -1,3 +1,5 @@
+//简易手机号
+const easyMobliephone = /^1\d{10}$/;
 //手机号
 const mobilephone = /^((13[0-9])|(14[5|7])|(15([0-3]|[5-9]))|(18[0,5-9]))\d{8}$/;
 //国内座机
@@ -28,8 +30,11 @@ const simplePWD = /^.*(?=.{6,})(?=.*\d).*$/;
 const URL = /^(https?:\/\/)([0-9a-z.]+)(:[0-9]+)?([/0-9a-z.]+)?(\?[0-9a-z&=]+)?(#[0-9-a-z]+)?/i;
 //中国邮政编码
 const postalCode = /[1-9]\d{5}(?!\d)/;
+//邮箱验证
+const email = /^[A-Za-z\d]+([-_.][A-Za-z\d]+)*@([A-Za-z\d]+[-.])+[A-Za-z\d]{2,4}$/
 
 export default {
+    $isEasyMobliephone: value => easyMobliephone.test(value),
     $isMobilephone: value => mobilephone.test(value),
     $isTelephone: value => telephone.test(value),
     $isIdCard: value => idCard.test(value),
@@ -45,4 +50,5 @@ export default {
     $isSimplePWD: value => simplePWD.test(value),
     $isURL: value => URL.test(value),
     $isPostalCode: value => postalCode.test(value),
+    $isEmail: value => email.test(value)
 }

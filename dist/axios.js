@@ -4,6 +4,8 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
 var _axios = require('axios');
 
 var _axios2 = _interopRequireDefault(_axios);
@@ -29,7 +31,6 @@ var deleteObjectFirstProperty = function deleteObjectFirstProperty() {
 
 var headerExceptRequestURLs = [];
 var headerOptions = [];
-var handleGlobalServerException = function handleGlobalServerException(response) {};
 var handleGlobalServerCode = function handleGlobalServerCode(error) {};
 
 var service = _axios2.default.create();
@@ -76,7 +77,6 @@ service.interceptors.response.use(function (response) {
     return response;
 }, function (error) {
     //响应错误处理
-    handleGlobalServerException(error);
     return Promise.reject(error);
 });
 
@@ -152,6 +152,88 @@ service.postJSON = function (url, par) {
     });
 };
 
+service.getBlob = function (url) {
+    var par = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+    var taskCallback = arguments[3];
+
+    var reqURL = url.indexOf('http') !== -1 || url.indexOf('https') !== -1 ? url : '' + service.defaults.baseURL + url;
+    var hasUrl = headerExceptRequestURLs.some(function (exceptURL) {
+        return exceptURL === reqURL;
+    });
+    var queryString = reqURL.indexOf('?') !== -1 ? '' : '?';
+    Object.keys(par).forEach(function (key) {
+        queryString += key + '=' + par[key] + '&';
+    });
+    queryString = queryString.substring(0, queryString.length - 1);
+    var header = {};
+    if (!hasUrl) {
+        headerOptions.forEach(function (headers) {
+            header[headers[0]] = headers[1];
+        });
+    }
+    options = options || {};
+    header = Object.assign(header, options.headers || {});
+    return new Promise(function (resolve, reject) {
+        var task = uni.downloadFile({
+            url: '' + reqURL + queryString,
+            header: header,
+            success: function success(res) {
+                resolve(res);
+            },
+            fail: function fail(res) {
+                reject(res);
+            }
+        });
+        if (taskCallback) taskCallback(task);
+    });
+};
+
+service.postMultipart = function (url) {
+    var par = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+    var taskCallback = arguments[3];
+
+    var reqURL = url.indexOf('http') !== -1 || url.indexOf('https') !== -1 ? url : '' + service.defaults.baseURL + url;
+    var hasUrl = headerExceptRequestURLs.some(function (exceptURL) {
+        return exceptURL === reqURL;
+    });
+
+    var _getObjectFirstProper = getObjectFirstProperty(par),
+        _getObjectFirstProper2 = _slicedToArray(_getObjectFirstProper, 2),
+        _getObjectFirstProper3 = _getObjectFirstProper2[0],
+        name = _getObjectFirstProper3 === undefined ? '' : _getObjectFirstProper3,
+        _getObjectFirstProper4 = _getObjectFirstProper2[1],
+        filePath = _getObjectFirstProper4 === undefined ? '' : _getObjectFirstProper4;
+
+    deleteObjectFirstProperty(par);
+    var header = {};
+    if (!hasUrl) {
+        headerOptions.forEach(function (headers) {
+            header[headers[0]] = headers[1];
+        });
+    }
+    options = options || {};
+    header = Object.assign(header, options.headers || {});
+    return new Promise(function (resolve, reject) {
+        var task = uni.uploadFile({
+            url: reqURL,
+            filePath: filePath,
+            name: name,
+            header: header,
+            formData: par,
+            success: function success(res) {
+                res.data = JSON.parse(res.data);
+                resolve(res);
+            },
+            fail: function fail(res) {
+                reject(res);
+            }
+        });
+        if (taskCallback) taskCallback(task);
+    });
+};
+
 service.setBaseUrl = function (baseURL) {
     service.defaults.baseURL = baseURL;
 };
@@ -177,11 +259,7 @@ service.changeIsWithCredentials = function (isWithCredentials) {
     service.withCredentials = isWithCredentials;
 };
 
-service.setHandleGlobalServerException = function (fn) {
-    handleGlobalServerException = fn;
-};
-
-service.setHandleGlobalServerCode = function (fn) {
+service.setResultCodeHandler = function (fn) {
     handleGlobalServerCode = fn;
 };
 

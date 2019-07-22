@@ -3,6 +3,8 @@
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
+//简易手机号
+var easyMobliephone = /^1\d{10}$/;
 //手机号
 var mobilephone = /^((13[0-9])|(14[5|7])|(15([0-3]|[5-9]))|(18[0,5-9]))\d{8}$/;
 //国内座机
@@ -33,8 +35,13 @@ var simplePWD = /^.*(?=.{6,})(?=.*\d).*$/;
 var URL = /^(https?:\/\/)([0-9a-z.]+)(:[0-9]+)?([/0-9a-z.]+)?(\?[0-9a-z&=]+)?(#[0-9-a-z]+)?/i;
 //中国邮政编码
 var postalCode = /[1-9]\d{5}(?!\d)/;
+//邮箱验证
+var email = /^[A-Za-z\d]+([-_.][A-Za-z\d]+)*@([A-Za-z\d]+[-.])+[A-Za-z\d]{2,4}$/;
 
 exports.default = {
+    $isEasyMobliephone: function $isEasyMobliephone(value) {
+        return easyMobliephone.test(value);
+    },
     $isMobilephone: function $isMobilephone(value) {
         return mobilephone.test(value);
     },
@@ -79,5 +86,8 @@ exports.default = {
     },
     $isPostalCode: function $isPostalCode(value) {
         return postalCode.test(value);
+    },
+    $isEmail: function $isEmail(value) {
+        return email.test(value);
     }
 };
