@@ -24,5 +24,6 @@ export default {
         });
 
         Vue.prototype.$axios = axios;
+        Vue.prototype.$uni = uni;
     }
 }
