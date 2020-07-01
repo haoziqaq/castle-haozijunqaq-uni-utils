@@ -207,12 +207,19 @@ service.addHeader = (key = '', value = '') => {
     headerOptions.push([key, value])
 };
 
+service.removeHeader = (key = '') => {
+    const index = headerOptions.findIndex((option) => option[0] === key);
+    if (index >= 0) {
+        headerOptions.splice(index, 1);
+    }
+};
+
 service.setHeadersExcept = (URLs = []) => {
     headerExceptRequestURLs = URLs;
 };
 
 service.changeIsWithCredentials = (isWithCredentials) => {
-    service.withCredentials = isWithCredentials;
+    service.defaults.withCredentials = isWithCredentials;
 };
 
 service.setResultCodeHandler = (fn) => {
